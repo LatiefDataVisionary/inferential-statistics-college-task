@@ -25,6 +25,8 @@ aisi_data$Bulan <- factor(aisi_data$Bulan,
                           levels = c("JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
                                      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"))
 
+#=======================================================
+
 # === 2. Visualisasi Data Awal (2 Kolom, 2 Grafik) ===
 # Penjualan Domestik
 plot_domestik <- ggplot(aisi_data, aes(x = Bulan, y = Penjualan_Domestik, group = 1)) +
@@ -58,118 +60,276 @@ plot_ekspor <- ggplot(aisi_data, aes(x = Bulan, y = Penjualan_Ekspor, group = 1)
 print(plot_domestik)
 print(plot_ekspor)
 
+#=======================================================
+
 # === 3. Tren Linear ===
 
 ## a. Metode Semi Rata-Rata
-semi_average_forecast <- function(data, col_name) {
+
+# Untuk Tren Negatif pada Kolom Domestik
+semi_average_forecast_dom <- function(data, col_name) {
   n <- nrow(data)  # Menentukan jumlah total baris (data) dalam data frame data.
+  print(paste("Total baris data (n):", n))
+  
   half <- floor(n / 2)  # Membagi data menjadi dua bagian yang hampir sama, 
                         # dengan half sebagai jumlah baris pada bagian pertama.
+  print(paste("Jumlah data setengah bagian pertama (half):", half))
   
   # Menghitung rata-rata nilai pada setengah pertama dari data (dari bulan 1 hingga tengah).
   mean_first <- mean(data[[col_name]][1:half]) 
+  print(paste("Rata-rata setengah bagian pertama (mean_first):", mean_first))
   
   # Menghitung rata-rata nilai pada setengah kedua dari data (dari tengah hingga akhir).
   mean_second <- mean(data[[col_name]][(half + 1):n])
+  print(paste("Rata-rata setengah bagian kedua (mean_second):", mean_second))
   
   # Menghitung kemiringan (slope) dari garis tren dengan mengukur perubahan rata-rata 
-  # antara dua setengah data dibagi dengan jumlah data pada masing-masing setengah.
+  #  antara dua setengah data dibagi dengan jumlah data pada masing-masing setengah.
   slope <- (mean_second - mean_first) / half
+  print(paste("Kemiringan (slope):", slope))
   
   # Menghitung titik potong (intercept) dari garis tren menggunakan rumus regresi linier.
   intercept <- mean_first - slope * (half / 2)
+  print(paste("Titik potong (intercept):", intercept))
   
   # Menentukan indeks bulan yang akan datang (JAN, FEB, MAR)
   future_indices <- 13:15
+  print("Indeks bulan yang akan datang (future_indices):")
   
   # Menghitung nilai ramalan untuk bulan-bulan yang akan datang 
   # menggunakan persamaan garis tren (slope dan intercept).
-  future_values <- intercept + slope * future_indices
+  future_values <- intercept - slope * future_indices
+  print("Nilai ramalan (future_values):")
+  print(future_indices)
+  
+  # Print hasil perhitungan
+  cat("\n\n")
+  print(paste("Intercept (a):", intercept))
+  print(paste("Slope (b):", slope))
+  print(paste("Indeks bulan yang akan datang (X):", paste(future_indices, collapse = ", ")))
+  print(paste("Nilai ramalan (Y):", paste(round(future_values, 0), collapse = ", ")))
+  
+  # Menampilkan persamaan lengkap
+  print(paste("===Persamaan Semi Rata-Rata Kolom Domestik(Tren Negatif): Y = ", round(intercept, 2), " - ", round(slope, 2), " * X"))
   
   # Mengembalikan data frame yang berisi bulan (JAN, FEB, MAR) 
   # beserta nilai ramalan yang sudah dibulatkan.
   return(data.frame(Bulan = c("JAN", "FEB", "MAR"), Ramalan = round(future_values, 0)))
 }
 
-ramalan_semi_dom <- semi_average_forecast(aisi_data, "Penjualan_Domestik")
-ramalan_semi_eks <- semi_average_forecast(aisi_data, "Penjualan_Ekspor")
-
-cat("Hasil Ramalan Semi Rata-Rata (Domestik):\n")
-print(ramalan_semi_dom)
-
-cat("\nHasil Ramalan Semi Rata-Rata (Ekspor):\n")
-print(ramalan_semi_eks)
-
-## b. Metode Kuadrat Terkecil (Linear Regression)
-linear_model_forecast <- function(data, col_name) {
-  model <- lm(data[[col_name]] ~ Index, data = data)
-  future_indices <- data.frame(Index = 13:15)
-  future_values <- predict(model, newdata = future_indices)
+# Untuk Tren Positif pada Kolom Ekspor
+semi_average_forecast_eks <- function(data, col_name) {
+  n <- nrow(data)  # Menentukan jumlah total baris (data) dalam data frame data.
+  print(paste("Total baris data (n):", n))
   
+  half <- floor(n / 2)  # Membagi data menjadi dua bagian yang hampir sama, 
+  # dengan half sebagai jumlah baris pada bagian pertama.
+  print(paste("Jumlah data setengah bagian pertama (half):", half))
+  
+  # Menghitung rata-rata nilai pada setengah pertama dari data (dari bulan 1 hingga tengah).
+  mean_first <- mean(data[[col_name]][1:half]) 
+  print(paste("Rata-rata setengah bagian pertama (mean_first):", mean_first))
+  
+  # Menghitung rata-rata nilai pada setengah kedua dari data (dari tengah hingga akhir).
+  mean_second <- mean(data[[col_name]][(half + 1):n])
+  print(paste("Rata-rata setengah bagian kedua (mean_second):", mean_second))
+  
+  # Menghitung kemiringan (slope) dari garis tren dengan mengukur perubahan rata-rata 
+  #  antara dua setengah data dibagi dengan jumlah data pada masing-masing setengah.
+  slope <- (mean_second - mean_first) / half
+  print(paste("Kemiringan (slope):", slope))
+  
+  # Menghitung titik potong (intercept) dari garis tren menggunakan rumus regresi linier.
+  intercept <- mean_first + slope * (half / 2)
+  print(paste("Titik potong (intercept):", intercept))
+  
+  # Menentukan indeks bulan yang akan datang (JAN, FEB, MAR)
+  future_indices <- 13:15
+  print("Indeks bulan yang akan datang (future_indices):")
+  
+  # Menghitung nilai ramalan untuk bulan-bulan yang akan datang 
+  # menggunakan persamaan garis tren (slope dan intercept).
+  future_values <- intercept - slope * future_indices
+  print("Nilai ramalan (future_values):")
+  print(future_indices)
+  
+  # Print hasil perhitungan
+  cat("\n\n")
+  print(paste("Intercept (a):", intercept))
+  print(paste("Slope (b):", slope))
+  print(paste("Indeks bulan yang akan datang (X):", paste(future_indices, collapse = ", ")))
+  print(paste("Nilai ramalan (Y):", paste(round(future_values, 0), collapse = ", ")))
+  
+  # Menampilkan persamaan lengkap
+  print(paste("===Persamaan Semi Rata-Rata Kolom Ekspor(Tren Positif): Y = ", round(intercept, 2), " - ", round(slope, 2), " * X"))
+  
+  # Mengembalikan data frame yang berisi bulan (JAN, FEB, MAR) 
+  # beserta nilai ramalan yang sudah dibulatkan.
   return(data.frame(Bulan = c("JAN", "FEB", "MAR"), Ramalan = round(future_values, 0)))
 }
 
-ramalan_linear_dom <- linear_model_forecast(aisi_data, "Penjualan_Domestik")
-ramalan_linear_eks <- linear_model_forecast(aisi_data, "Penjualan_Ekspor")
+cat("\n===Penjualan Domestik")
+ramalan_semi_dom <- semi_average_forecast_dom(aisi_data, "Penjualan_Domestik")
+cat("Hasil Ramalan Semi Rata-Rata (Domestik):\n")
+print(ramalan_semi_dom)
 
-cat("\nHasil Ramalan Kuadrat Terkecil (Domestik):\n")
+cat("\n===Penjualan Ekspor")
+ramalan_semi_eks <- semi_average_forecast_eks(aisi_data, "Penjualan_Ekspor")
+cat("\nHasil Ramalan Semi Rata-Rata (Ekspor):\n")
+print(ramalan_semi_eks)
+
+
+# ----------------------------------------------------------------------
+
+## b. Metode Kuadrat Terkecil (Linear Regression)
+
+# Menambahkan kolom Index ke dataset
+aisi_data$Index <- seq_len(nrow(aisi_data))  # Menambahkan urutan 1, 2, 3, ..., sesuai jumlah baris data
+
+ramalan_linear <- function(data, col_name) {
+  # Membuat model linear menggunakan fungsi lm()
+  model <- lm(data[[col_name]] ~ Index, data = data)
+  
+  # Menampilkan ringkasan model
+  print("Ringkasan Model Linear:")
+  print(summary(model))
+  
+  # Menentukan indeks bulan yang akan datang (JAN, FEB, MAR)
+  future_indices <- data.frame(Index = 13:15)
+  print("Indeks bulan yang akan datang (future_indices):")
+  print(future_indices)
+  
+  # Menghitung nilai ramalan untuk bulan-bulan yang akan datang
+  future_values <- predict(model, newdata = future_indices)
+  print("Nilai ramalan (future_values):")
+  print(future_values)
+  
+  # Menampilkan hasil perhitungan
+  cat("\n\n")
+  print(paste("Model Linear untuk kolom", col_name, ":"))
+  print(paste("Nilai ramalan (Y) untuk bulan JAN, FEB, MAR:", paste(round(future_values, 0), collapse = ", ")))
+  
+  # Menampilkan persamaan model linear (Y = a + bX)
+  coef_intercept <- coef(model)[1]  # Intercept (a)
+  coef_slope <- coef(model)[2]     # Slope (b)
+  print(paste("Persamaan Linear Regression: Y = ", round(coef_intercept, 2), " + ", round(coef_slope, 2), " * X"))
+  
+  # Mengembalikan data frame yang berisi bulan (JAN, FEB, MAR) 
+  # beserta nilai ramalan yang sudah dibulatkan.
+  return(data.frame(Bulan = c("JAN", "FEB", "MAR"), Ramalan = round(future_values, 0)))
+}
+
+cat("\n===Penjualan Domestik")
+ramalan_linear_dom <- linear_model_forecast(aisi_data, "Penjualan_Domestik")
+cat("Hasil Ramalan Kuadrat Terkecil (Domestik):\n")
 print(ramalan_linear_dom)
 
+cat("\n===Penjualan Ekspor")
+ramalan_linear_eks <- linear_model_forecast(aisi_data, "Penjualan_Ekspor")
 cat("\nHasil Ramalan Kuadrat Terkecil (Ekspor):\n")
 print(ramalan_linear_eks)
 
+
+#=======================================================
+
 # === 4. Tren Non-Linear ===
 
-## a. Metode Kuadratis
+# Menambahkan kolom Index jika belum ada
+if (!"Index" %in% colnames(aisi_data)) {
+  aisi_data$Index <- 1:nrow(aisi_data)  # Mengisi kolom Index dari 1 hingga jumlah baris data
+}
+
 # Menambahkan variabel kuadrat ke dataset
 aisi_data$Index_Squared <- aisi_data$Index^2
 
-# Fungsi untuk membuat model kuadratis dan memprediksi nilai di masa depan
+# Fungsi untuk model kuadratis dan prediksi nilai di masa depan
 quadratic_model_forecast <- function(data, col_name) {
   # Membuat model regresi kuadratis
   model <- lm(data[[col_name]] ~ Index + Index_Squared, data = data)
   
-  # Menyiapkan data indeks masa depan
-  future_indices <- data.frame(Index = 13:15, Index_Squared = 13:15^2)
+  # Menampilkan persamaan model
+  coef <- coef(model)
+  persamaan <- paste("Y = ", round(coef[1], 2), 
+                     "+", round(coef[2], 2), "* X", 
+                     "+", round(coef[3], 2), "* X^2")
+  cat("\nPersamaan Model Kuadratis:\n", persamaan, "\n")
+  
+  # Menentukan indeks bulan masa depan (JAN, FEB, MAR)
+  future_indices <- data.frame(Index = 13:15, Index_Squared = (13:15)^2)
   
   # Membuat prediksi
   future_values <- predict(model, newdata = future_indices)
   
-  # Mengembalikan hasil dalam format data frame
-  return(data.frame(Bulan = c("JAN", "FEB", "MAR"), Ramalan = round(future_values, 0)))
+  # Menampilkan ringkasan hasil
+  hasil <- data.frame(Bulan = c("JAN", "FEB", "MAR"), Ramalan = round(future_values, 0))
+  return(hasil)
 }
+
 # Memprediksi penjualan domestik
+cat("\n=== Penjualan Domestik (Metode Kuadratis) ===")
 ramalan_quad_dom <- quadratic_model_forecast(aisi_data, "Penjualan_Domestik")
-
-# Memprediksi penjualan ekspor
-ramalan_quad_eks <- quadratic_model_forecast(aisi_data, "Penjualan_Ekspor")
-
-# Menampilkan hasil
 cat("\nHasil Ramalan Kuadratis (Domestik):\n")
 print(ramalan_quad_dom)
 
+# Memprediksi penjualan ekspor
+cat("\n=== Penjualan Ekspor (Metode Kuadratis) ===")
+ramalan_quad_eks <- quadratic_model_forecast(aisi_data, "Penjualan_Ekspor")
 cat("\nHasil Ramalan Kuadratis (Ekspor):\n")
 print(ramalan_quad_eks)
 
+
+
+
+
+
+#----------------------------------------
+
+
 ## b. Metode Eksponensial
+# Fungsi untuk metode eksponensial
 exponential_model_forecast <- function(data, col_name) {
+  # Menambahkan kolom log dari data penjualan
   data$log_penjualan <- log(data[[col_name]])
+  
+  # Membuat model regresi linier pada skala logaritmik
   model <- lm(log_penjualan ~ Index, data = data)
+  
+  # Menampilkan persamaan model
+  coef <- coef(model)
+  persamaan <- paste("ln(Y) = ", round(coef[1], 2), "+", round(coef[2], 2), "* X")
+  cat("\nPersamaan Model Eksponensial:\n", persamaan, "\n")
+  
+  # Menentukan indeks bulan masa depan (JAN, FEB, MAR)
   future_indices <- data.frame(Index = 13:15)
+  
+  # Membuat prediksi log nilai masa depan
   future_log_values <- predict(model, newdata = future_indices)
+  
+  # Mengubah prediksi log menjadi nilai eksponensial
   future_values <- exp(future_log_values)
   
-  return(data.frame(Bulan = c("JAN", "FEB", "MAR"), Ramalan = round(future_values, 0)))
+  # Menampilkan hasil perhitungan
+  hasil <- data.frame(Bulan = c("JAN", "FEB", "MAR"), Ramalan = round(future_values, 0))
+  return(hasil)
 }
 
+# Memprediksi penjualan domestik
+cat("\n=== Penjualan Domestik (Metode Eksponensial) ===")
 ramalan_exp_dom <- exponential_model_forecast(aisi_data, "Penjualan_Domestik")
-ramalan_exp_eks <- exponential_model_forecast(aisi_data, "Penjualan_Ekspor")
-
 cat("\nHasil Ramalan Eksponensial (Domestik):\n")
 print(ramalan_exp_dom)
 
+# Memprediksi penjualan ekspor
+cat("\n=== Penjualan Ekspor (Metode Eksponensial) ===")
+ramalan_exp_eks <- exponential_model_forecast(aisi_data, "Penjualan_Ekspor")
 cat("\nHasil Ramalan Eksponensial (Ekspor):\n")
 print(ramalan_exp_eks)
+
+
+
+
+
+#=======================================================
 
 # === 5. Tabel Hasil Keseluruhan ===
 hasil_domestik <- cbind(
@@ -195,7 +355,9 @@ cat("\nTabel Hasil Penjualan Ekspor (Keempat Metode):\n")
 print(hasil_ekspor)
 
 
-#-------
+
+#=======================================================
+
 # === 5. Tabel Hasil Keseluruhan ===
 # Pastikan dataset ramalan sudah memiliki nama bulan
 ramalan_semi_dom$Bulan <- c("JAN", "FEB", "MAR")
@@ -234,6 +396,7 @@ print(hasil_ekspor)
 
 
 
+#=======================================================
 
 
 # === 6. Menghitung Measure of Accuracy ===
