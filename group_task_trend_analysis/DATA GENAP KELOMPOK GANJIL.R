@@ -18,6 +18,8 @@ print(car_sales_data)
 
 
 # 2. Visualisasi data penjualan awal
+# Memuat library untuk visualisasi
+library(ggplot2)
 ggplot(car_sales_data, aes(x = Year, y = Units)) +
   geom_line(color = "blue", size = 1) +
   geom_point(color = "blue", size = 2) +
@@ -102,7 +104,7 @@ ggplot(combined_data, aes(x = Year)) +
   theme_minimal()
 
 
-# Menghitung Measure of Accuracy
+# 5. Menghitung Measure of Accuracy
 
 # 1. Filter data yang memiliki nilai aktual (tidak NA)
 actual_data <- car_sales_data[!is.na(car_sales_data$Units), ]
