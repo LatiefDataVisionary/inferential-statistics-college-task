@@ -60,7 +60,7 @@ plot(forecast_ar, main = "Forecast from AR(1,0,0)", col = "blue")
 
 
 
-
+#--------------------------------------
 
 #CONTOH MA(2)
 ACF.MA2 = ARMAacf(ar = 0, ma = c(1.5, -0.7), 20)
@@ -102,7 +102,7 @@ plot(forecast_ma, main = "Forecast MA Model", col = "red")
 
 
 
-
+#-----------
 
 
 #CONTOH ARMA(1,1)
@@ -282,8 +282,9 @@ print(sunspots_ts)
 #Cara 2
 #NO 1
 library(readxl)
-Datasunspot <- read_excel("sunspots_1755_1831.xlsx")
+Datasunspot <- read_excel("C:/Kuliah/Sains Data Sem 3/Statistika Inferensial Lanjut Praktik/Tugas/15. AR MA ARMA ARIMA/sunspots_1755_1831.xlsx")
 View(Datasunspot)
+Datasunspot
 
 # Periksa struktur data dan pastikan nama kolom benar
 str(Datasunspot)
